@@ -67,23 +67,39 @@ const float M_PI2 = 2 * M_PI;
 #define V(x)           { hr = (x); }
 #endif
 
-static bool CompileShader(PWCHAR strPath, D3D10_SHADER_MACRO * pMacros, const char * strEntryPoint, const char * strProfile, DWORD dwShaderFlags, ID3DBlob ** ppVertexShaderBuffer)
+static bool CompileShader(PWCHAR strPath, D3D10_SHADER_MACRO* pMacros, const char * strEntryPoint, const char * strProfile, DWORD dwShaderFlags, ID3DBlob ** blob)
 {
+	if (!strPath || !strEntryPoint || !strProfile || !blob)
+		return false;
+
+	*blob = nullptr;
 
 	HRESULT hr;
 	ID3DInclude* include = D3D_COMPILE_STANDARD_FILE_INCLUDE;
-	ID3DBlob* pErrorBlob;
+	ID3DBlob* shaderBlob = nullptr;
+	ID3DBlob* errorBlob = nullptr;
 	if (FAILED(hr = D3DCompileFromFile(strPath, pMacros, include, strEntryPoint, strProfile, dwShaderFlags, 0,
-		ppVertexShaderBuffer, &pErrorBlob)))
+		&shaderBlob, &errorBlob)))
 	{
-		int buffSize = pErrorBlob->GetBufferSize() + 1;
-		LPWSTR gah = new wchar_t[buffSize];
-		MultiByteToWideChar(CP_ACP, 0, (char*)pErrorBlob->GetBufferPointer(), buffSize, gah, buffSize);
-		OutputDebugString(gah);
-		delete[] gah;
-		OutputDebugString(L"\n");
+		if (errorBlob)
+		{
+			int buffSize = errorBlob->GetBufferSize() + 1;
+			LPWSTR gah = new wchar_t[buffSize];
+			MultiByteToWideChar(CP_ACP, 0, (char*)errorBlob->GetBufferPointer(), buffSize, gah, buffSize);
+			OutputDebugString(gah);
+			delete[] gah;
+			OutputDebugString(L"\n");
+			errorBlob->Release();
+		}
+
+		if (shaderBlob)
+			shaderBlob->Release();
+		
 		return false;
 	}
+
+	*blob = shaderBlob;
+
 	return true;
 }
 
