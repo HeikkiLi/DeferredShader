@@ -155,7 +155,7 @@ DeferredShaderApp::DeferredShaderApp(HINSTANCE hInstance)
 	mSpotInnerAngle = 15.0f;
 	mSpotCastShadows = false;
 
-	mPointCastShadows = true;
+	mPointCastShadows = false;
 
 	// init light values
 	mAmbientLowerColor = XMVectorSet(0.1f, 0.2f, 0.1f, 1.0f);
@@ -245,7 +245,7 @@ bool DeferredShaderApp::Init()
 	}
 
 	// init camera
-	mCamera->LookAt(XMFLOAT3(6.0, 4.0, -11.0), XMFLOAT3(-0.6, -0.2, 0.8), XMFLOAT3(0.0, 1.0, 0.0));
+	mCamera->LookAt(XMFLOAT3(12.0, 6.0, -15.0), XMFLOAT3(-0.6, -0.2, 0.8), XMFLOAT3(0.0, 1.0, 0.0));
 	mCamera->SetLens(0.25f*M_PI, AspectRatio(), 1.0f, 1000.0f);
 	mCamera->UpdateViewMatrix();
 
@@ -311,7 +311,7 @@ void DeferredShaderApp::Update(float dt)
 	mLightManager.ClearLights();
 	
 	// point lights
-	mLightManager.AddPointLight(mLightPositions[1], mLightRange, mLightColor[1], mPointCastShadows);
+	//mLightManager.AddPointLight(mLightPositions[1], mLightRange, mLightColor[1], mPointCastShadows);
 	
 	// spot light
 	//mLightManager.AddSpotLight(mLightPositions[2], mSpotDirection, mSpotRange, mSpotOuterAngle, mSpotInnerAngle, mLightColor[2], mSpotCastShadows);

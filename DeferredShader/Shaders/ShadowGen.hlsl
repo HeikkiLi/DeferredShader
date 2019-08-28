@@ -10,10 +10,16 @@ float4 SpotShadowGenVS(float4 Pos : POSITION) : SV_Position
 	return mul(Pos, ShadowMat);
 }
 
-//////////// Point Shadowmap Generation
-float4 PointShadowGenVS(float4 Pos : POSITION) : SV_Position
+cbuffer cbPerObjectVS : register(b0)
 {
-	return Pos;
+	float4x4 WorldViewProjection    : packoffset(c0);
+	float4x4 World                  : packoffset(c4);
+}
+
+//////////// Point and Cascaded Shadowmap Generation
+float4 ShadowMapGenVS(float4 Pos : POSITION) : SV_Position
+{
+	return mul(Pos, World);
 }
 
 cbuffer cbuffercbShadowMapCubeGS : register(b0)

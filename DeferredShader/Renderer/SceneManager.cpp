@@ -48,13 +48,24 @@ bool SceneManager::Init(ID3D11Device* device, Camera* camera)
 
 	Mesh* mesh = new Mesh();
 	mesh->Create(device, meshData);
-	XMMATRIX matTranslate = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	XMMATRIX matScale = XMMatrixScaling(2.0f, 2.0f, 2.0f);
+	XMMATRIX matTranslate = XMMatrixTranslation(-1.0f, 0.0f, -1.0f);
+	XMMATRIX matScale = XMMatrixScaling(4.0f, 4.0f, 4.0f);
 	XMMATRIX matRot = XMMatrixRotationY(M_PI);
 	mesh->mWorld = matTranslate * matScale * matRot; 
 	mMeshes.push_back(mesh);
+	
+	MeshData meshDataTP;
+	if (!ObjLoader::Instance()->LoadToMesh("..\\Assets\\teapot.obj", "..\\Assets\\", meshDataTP))
+		return false;
 
-
+	Mesh* mesh2 = new Mesh();
+	mesh2->Create(device, meshDataTP);
+	matTranslate = XMMatrixTranslation(4.0f, 0.0f, -2.0f);
+	matScale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	matRot = XMMatrixRotationY(0.4*M_PI);
+	mesh2->mWorld = matTranslate * matScale * matRot;
+	mMeshes.push_back(mesh2);
+	
 	// Grid 
 	//GeometryGenerator::Instance()->CreateGrid(12.0f, 12.0f, 4, 4, meshData);
 	MeshData meshData2;
@@ -68,7 +79,7 @@ bool SceneManager::Init(ID3D11Device* device, Camera* camera)
 	mesh = new Mesh();
 	mesh->Create(device, meshData2);
 	//mesh->mMaterials[0] = gridMat;
-	matScale = XMMatrixScaling(12.0f, 0.1f, 12.0f);
+	matScale = XMMatrixScaling(20.0f, 0.1f, 20.0f);
 	mesh->mWorld = XMMatrixIdentity() * matScale;
 	mMeshes.push_back(mesh);
 
@@ -226,9 +237,28 @@ void SceneManager::Render(ID3D11DeviceContext* pd3dImmediateContext)
 
 void SceneManager::RenderSceneNoShaders(ID3D11DeviceContext * pd3dImmediateContext)
 {
+
+	XMMATRIX mView = mCamera->View();
+	XMMATRIX mProj = mCamera->Proj();
+
+	// render meshes
 	for (int i = 0; i < mMeshes.size(); ++i)
 	{
-		// render meshes
+		// set object world matrix
+		XMMATRIX mWorld = mMeshes[i]->mWorld;
+		XMMATRIX mWorldViewProjection = mWorld * mView * mProj;
+
+		// Set the constant buffers
+		HRESULT hr;
+		D3D11_MAPPED_SUBRESOURCE MappedResource;
+		HR(pd3dImmediateContext->Map(mSceneVertexShaderCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
+		CB_VS_PER_OBJECT* pVSPerObject = (CB_VS_PER_OBJECT*)MappedResource.pData;
+		pVSPerObject->mWorldViewProjection = XMMatrixTranspose(mWorldViewProjection);
+		pVSPerObject->mWorld = XMMatrixTranspose(mWorld);
+		pd3dImmediateContext->Unmap(mSceneVertexShaderCB, 0);
+		pd3dImmediateContext->VSSetConstantBuffers(0, 1, &mSceneVertexShaderCB);
+
+		// render mesh, sets vertex and index buffers
 		mMeshes[i]->Render(pd3dImmediateContext);
 	}
 

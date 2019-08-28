@@ -27,7 +27,7 @@ struct CB_DIRECTIONAL
 
 struct CB_POINT_LIGHT_DOMAIN
 {
-	XMMATRIX WolrdViewProj;
+	XMMATRIX WorldViewProj;
 };
 
 struct CB_POINT_LIGHT_PIXEL
@@ -154,6 +154,7 @@ LightManager::LightManager()
 	mCascadedShadowGenGeometryCB = NULL;
 
 	mDebugCascadesPixelShader = NULL;
+
 }
 
 
@@ -201,7 +202,6 @@ HRESULT LightManager::Init(ID3D11Device* device, Camera* camera)
 	cbDesc.ByteWidth = 3 * sizeof(XMMATRIX);
 	V_RETURN(device->CreateBuffer(&cbDesc, NULL, &mCascadedShadowGenGeometryCB));
 	DX_SetDebugName(mCascadedShadowGenGeometryCB, "Cascaded Shadow Gen Geometry CB");
-
 
 	// Read the HLSL file
 	WCHAR dirShaderSrc[MAX_PATH] = L"..\\DeferredShader\\Shaders\\DirectionalLight.hlsl";
@@ -311,7 +311,7 @@ HRESULT LightManager::Init(ID3D11Device* device, Camera* camera)
 		pShaderBlob->GetBufferSize(), &mShadowGenVSLayout));
 	SAFE_RELEASE(pShaderBlob);
 
-	V_RETURN(CompileShader(shadowgenSrc, NULL, "PointShadowGenVS", "vs_5_0", dwShaderFlags, &pShaderBlob));
+	V_RETURN(CompileShader(shadowgenSrc, NULL, "ShadowMapGenVS", "vs_5_0", dwShaderFlags, &pShaderBlob));
 	V_RETURN(device->CreateVertexShader(pShaderBlob->GetBufferPointer(),
 		pShaderBlob->GetBufferSize(), NULL, &mPointShadowGenVertexShader));
 	DX_SetDebugName(mPointShadowGenVertexShader, "Point Shadow Gen VS");
@@ -323,7 +323,7 @@ HRESULT LightManager::Init(ID3D11Device* device, Camera* camera)
 	DX_SetDebugName(mPointShadowGenGeometryShader, "Point Shadow Gen GS");
 	SAFE_RELEASE(pShaderBlob);
 
-	V_RETURN(CompileShader(shadowgenSrc, NULL, "PointShadowGenVS", "vs_5_0", dwShaderFlags, &pShaderBlob)); // Both use the same shader
+	V_RETURN(CompileShader(shadowgenSrc, NULL, "ShadowMapGenVS", "vs_5_0", dwShaderFlags, &pShaderBlob)); // Both use the same shader
 	V_RETURN(device->CreateVertexShader(pShaderBlob->GetBufferPointer(),
 		pShaderBlob->GetBufferSize(), NULL, &mCascadedShadowGenVertexShader));
 	DX_SetDebugName(mCascadedShadowGenVertexShader, "Cascaded Shadow Maps Gen VS");
@@ -403,6 +403,7 @@ HRESULT LightManager::Init(ID3D11Device* device, Camera* camera)
 	descRast.DepthBias = 85;
 	descRast.SlopeScaledDepthBias = 5.0;
 	V_RETURN(device->CreateRasterizerState(&descRast, &mShadowGenRS));
+	DX_SetDebugName(mCascadedShadowGenRS, "Shadow Gen RS");
 
 	descRast.DepthClipEnable = FALSE;
 	V_RETURN(device->CreateRasterizerState(&descRast, &mCascadedShadowGenRS));
@@ -891,7 +892,7 @@ void LightManager::PointLight(ID3D11DeviceContext* pd3dImmediateContext, const X
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
 	V(pd3dImmediateContext->Map(mPointLightDomainCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource));
 	CB_POINT_LIGHT_DOMAIN* pPointLightDomainCB = (CB_POINT_LIGHT_DOMAIN*)MappedResource.pData;
-	pPointLightDomainCB->WolrdViewProj = XMMatrixTranspose(mWorldViewProjection);
+	pPointLightDomainCB->WorldViewProj = XMMatrixTranspose(mWorldViewProjection);
 	pd3dImmediateContext->Unmap(mPointLightDomainCB, 0);
 	pd3dImmediateContext->DSSetConstantBuffers(0, 1, &mPointLightDomainCB);
 
