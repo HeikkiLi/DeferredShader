@@ -809,6 +809,7 @@ bool LightManager::PrepareNextShadowLight(ID3D11DeviceContext* pd3dImmediateCont
 			{
 				PointShadowGen(pd3dImmediateContext, light);
 			}
+			return true;
 		}
 		else if (mDirCastShadows && mLastShadowLight == (int)mArrLights.size())
 		{
@@ -816,9 +817,10 @@ bool LightManager::PrepareNextShadowLight(ID3D11DeviceContext* pd3dImmediateCont
 			pd3dImmediateContext->RSSetState(mCascadedShadowGenRS);
 
 			CascadedShadowsGen(pd3dImmediateContext);
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	return false;
