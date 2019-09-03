@@ -64,6 +64,11 @@ XMFLOAT3 Camera::GetLook()const
 	return mLook;
 }
 
+void Camera::SetLook(XMFLOAT3 lookAt)
+{
+	mLook = lookAt;
+}
+
 float Camera::GetNearZ()const
 {
 	return mNearZ;

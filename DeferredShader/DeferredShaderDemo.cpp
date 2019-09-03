@@ -712,10 +712,9 @@ void DeferredShaderApp::RenderGUI()
 			if (ImGui::CollapsingHeader("Camera"))
 			{
 				float campos[3] = { mCamera->GetPosition().x, mCamera->GetPosition().y, mCamera->GetPosition().z };
-				ImGui::SliderFloat3("position##campos", campos, -1.0f, 1.0f);
+				ImGui::SliderFloat3("position##campos", campos, -50.0f, 50.0f);
+				mCamera->SetPosition(XMFLOAT3((float*)& campos));
 
-				float camlook[3] = { mCamera->GetLook().x, mCamera->GetLook().y, mCamera->GetLook().z };
-				ImGui::SliderFloat3("look##camlook", camlook, -1.0f, 1.0f);
 			}
 
 			ImGui::Checkbox("FrameStats (F1)", &mShowRenderStats);
