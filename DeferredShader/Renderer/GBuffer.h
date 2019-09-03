@@ -26,8 +26,6 @@ public:
 	void PostRender(ID3D11DeviceContext* pd3dImmediateContext);
 	void PrepareForUnpack(ID3D11DeviceContext* pd3dImmediateContext, Camera* camera);
 
-	void SnapScreenshot(ID3D11DeviceContext* pd3dImmediateContext);
-	
 	ID3D11Texture2D* GetColorTexture() { return mColorSpecIntensityRT; }
 
 	ID3D11DepthStencilView* GetDepthDSV() { return mDepthStencilDSV; }
@@ -64,5 +62,4 @@ private:
 
 	ID3D11DepthStencilState *mDepthStencilState;
 
-	bool mSaveScreenshots;
 };

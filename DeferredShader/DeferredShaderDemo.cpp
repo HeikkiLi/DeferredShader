@@ -39,6 +39,7 @@
 #include "Renderer/LightManager.h"
 #include "Renderer/Util.h"
 
+enum RENDER_STATE { BACKBUFFERRT, DEPTHRT, COLSPECRT, NORMALRT, SPECPOWRT };
 
 class DeferredShaderApp : public D3DRendererApp
 {
@@ -66,6 +67,12 @@ private:
 	ID3D11VertexShader*	mGBufferVisVertexShader = NULL;
 	ID3D11PixelShader*	mGBufferVisPixelShader = NULL;
 
+	ID3D11VertexShader* mTextureVisVS = NULL;
+	ID3D11PixelShader* mTextureVisPSDepthPS = NULL;
+	ID3D11PixelShader* mTextureVisPSCSpecPS = NULL;
+	ID3D11PixelShader* mTextureVisPSNormalPS = NULL;
+	ID3D11PixelShader* mTextureVisPSSpecPowPS = NULL;
+
 	// for managing the scene
 	SceneManager mSceneManager;
 	LightManager mLightManager;
@@ -74,6 +81,7 @@ private:
 	GBuffer mGBuffer;
 	bool mVisualizeGBuffer;
 	void VisualizeGBuffer();
+	void VisualizeFullScreenGBufferTexture();
 
 	// Light values
 	bool mVisualizeLightVolume;
@@ -104,6 +112,8 @@ private:
 	void RenderGUI();
 	bool mShowSettings;
 	bool mShowShadowMap;
+
+	RENDER_STATE mRenderState;
 };
 
 
@@ -112,7 +122,7 @@ private:
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int showCmd)
 {
 	// Enable run-time memory check for debug builds.
-#if defined(DEBUG) | defined(_DEBUG)
+#if defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
@@ -153,7 +163,7 @@ DeferredShaderApp::DeferredShaderApp(HINSTANCE hInstance)
 	mSpotRange = 30.0f;
 	mSpotOuterAngle = 20.0f;
 	mSpotInnerAngle = 15.0f;
-	mSpotCastShadows = false;
+	mSpotCastShadows = true;
 
 	mPointCastShadows = false;
 
@@ -165,6 +175,8 @@ DeferredShaderApp::DeferredShaderApp(HINSTANCE hInstance)
 	mDirCastShadows = true;
 	mAntiFlickerOn = true;
 	mVisualizeCascades = false;
+
+	mRenderState = RENDER_STATE::BACKBUFFERRT;
 }
 
 DeferredShaderApp::~DeferredShaderApp()
@@ -174,7 +186,14 @@ DeferredShaderApp::~DeferredShaderApp()
 	SAFE_RELEASE(mGBufferVisVertexShader);
 	SAFE_RELEASE(mGBufferVisPixelShader);
 
+	SAFE_RELEASE(mTextureVisVS);
+
 	SAFE_DELETE(mCamera);
+
+	SAFE_RELEASE(mTextureVisPSDepthPS);
+	SAFE_RELEASE(mTextureVisPSCSpecPS);
+	SAFE_RELEASE(mTextureVisPSNormalPS);
+	SAFE_RELEASE(mTextureVisPSSpecPowPS);
 
 	mSceneManager.Release();
 	mLightManager.Release();
@@ -214,6 +233,18 @@ bool DeferredShaderApp::Init()
 	if (FAILED(hr))
 		return false;
 
+	if (!CompileShader(str, NULL, "TextureVisVS", "vs_5_0", dwShaderFlags, &pShaderBlob))
+	{
+		MessageBox(0, L"CompileShader Failed.", 0, 0);
+		return false;
+	}
+
+	hr = md3dDevice->CreateVertexShader(pShaderBlob->GetBufferPointer(),
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisVS);
+	SAFE_RELEASE(pShaderBlob);
+	if (FAILED(hr))
+		return false;
+
 	if (!CompileShader(str, NULL, "GBufferVisPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
 	{
 		MessageBox(0, L"CompileShader Failed.", 0, 0);
@@ -224,6 +255,52 @@ bool DeferredShaderApp::Init()
 	SAFE_RELEASE(pShaderBlob);
 	if (FAILED(hr))
 		return false;
+
+	if (!CompileShader(str, NULL, "TextureVisPSDepthPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	{
+		MessageBox(0, L"CompileShader Failed.", 0, 0);
+		return false;
+	}
+	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSDepthPS);
+	SAFE_RELEASE(pShaderBlob);
+	if (FAILED(hr))
+		return false;
+	
+
+	if (!CompileShader(str, NULL, "TextureVisPSCSpecPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	{
+		MessageBox(0, L"CompileShader Failed.", 0, 0);
+		return false;
+	}
+	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSCSpecPS);
+	SAFE_RELEASE(pShaderBlob);
+	if (FAILED(hr))
+		return false;
+
+	if (!CompileShader(str, NULL, "TextureVisPSNormalPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	{
+		MessageBox(0, L"CompileShader Failed.", 0, 0);
+		return false;
+	}
+	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSNormalPS);
+	SAFE_RELEASE(pShaderBlob);
+	if (FAILED(hr))
+		return false;
+
+	if (!CompileShader(str, NULL, "TextureVisPSSpecPowPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	{
+		MessageBox(0, L"CompileShader Failed.", 0, 0);
+		return false;
+	}
+	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSSpecPowPS);
+	SAFE_RELEASE(pShaderBlob);
+	if (FAILED(hr))
+		return false;
+
 
 	// create samplers
 	D3D11_SAMPLER_DESC samDesc;
@@ -292,10 +369,6 @@ void DeferredShaderApp::Update(float dt)
 		// Save backbuffer
 		LPCTSTR screenshotFileName = L"screenshot.jpg";
 		SnapScreenshot(screenshotFileName);
-
-		// save GBuffer textures
-		mGBuffer.SnapScreenshot(md3dImmediateContext);
-
 	}
 
 	if (GetAsyncKeyState(VK_F11) & 0x01)
@@ -306,6 +379,17 @@ void DeferredShaderApp::Update(float dt)
 
 	if (GetAsyncKeyState(VK_UP) & 0x01)
 		mCamera->Walk(dt * 50.0f);
+
+	if (GetAsyncKeyState(VK_NUMPAD1) & 0x01)
+		mRenderState = RENDER_STATE::BACKBUFFERRT;
+	if (GetAsyncKeyState(VK_NUMPAD2) & 0x01)
+		mRenderState = RENDER_STATE::DEPTHRT;
+	if (GetAsyncKeyState(VK_NUMPAD3) & 0x01)
+		mRenderState = RENDER_STATE::COLSPECRT;
+	if (GetAsyncKeyState(VK_NUMPAD4) & 0x01)
+		mRenderState = RENDER_STATE::NORMALRT;
+	if (GetAsyncKeyState(VK_NUMPAD5) & 0x01)
+		mRenderState = RENDER_STATE::SPECPOWRT;
 
 	/////  Rest of the lights
 	mLightManager.ClearLights();
@@ -390,6 +474,16 @@ void DeferredShaderApp::Render()
 
 		md3dImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mGBuffer.GetDepthDSV());
 
+	}
+
+	
+	if (mRenderState != RENDER_STATE::BACKBUFFERRT)
+	{
+		md3dImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, NULL);
+
+		VisualizeFullScreenGBufferTexture();
+
+		md3dImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mGBuffer.GetDepthDSV());
 	}
 
 	// Show the shadow cascades
@@ -483,6 +577,49 @@ void DeferredShaderApp::VisualizeGBuffer()
 	md3dImmediateContext->PSSetShader(mGBufferVisPixelShader, NULL, 0);
 
 	md3dImmediateContext->Draw(16, 0);
+
+	// Cleanup
+	md3dImmediateContext->VSSetShader(NULL, NULL, 0);
+	md3dImmediateContext->PSSetShader(NULL, NULL, 0);
+
+	ZeroMemory(arrViews, sizeof(arrViews));
+	md3dImmediateContext->PSSetShaderResources(0, 4, arrViews);
+}
+
+void DeferredShaderApp::VisualizeFullScreenGBufferTexture()
+{
+	ID3D11ShaderResourceView* arrViews[4] = { mGBuffer.GetDepthView(), mGBuffer.GetColorView(), mGBuffer.GetNormalView() , mGBuffer.GetSpecPowerView() };
+	md3dImmediateContext->PSSetShaderResources(0, 4, arrViews);
+
+	md3dImmediateContext->PSSetSamplers(1, 1, &mSampPoint);
+
+	md3dImmediateContext->IASetInputLayout(NULL);
+	md3dImmediateContext->IASetVertexBuffers(0, 0, NULL, NULL, NULL);
+	md3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	// Set the shaders
+	md3dImmediateContext->VSSetShader(mTextureVisVS, NULL, 0);
+	md3dImmediateContext->GSSetShader(NULL, NULL, 0);
+	switch (mRenderState)
+	{
+	case DEPTHRT:
+		md3dImmediateContext->PSSetShader(mGBufferVisPixelShader, NULL, 0);
+		break;
+	case COLSPECRT:
+		md3dImmediateContext->PSSetShader(mTextureVisPSCSpecPS, NULL, 0);
+		break;
+	case NORMALRT:
+		md3dImmediateContext->PSSetShader(mTextureVisPSNormalPS, NULL, 0);
+		break;
+	case SPECPOWRT:
+		md3dImmediateContext->PSSetShader(mTextureVisPSSpecPowPS, NULL, 0);
+		break;
+	default:
+		break;
+	}
+	
+
+	md3dImmediateContext->Draw(4, 0);
 
 	// Cleanup
 	md3dImmediateContext->VSSetShader(NULL, NULL, 0);

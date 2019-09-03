@@ -107,7 +107,7 @@ static bool CompileShader(PWCHAR strPath, D3D10_SHADER_MACRO* pMacros, const cha
 
 // Use DX_SetDebugName() to attach names to D3D objects for use by 
 // SDKDebugLayer, PIX's object table, etc.
-#if defined(PROFILE) || defined(DEBUG)
+#if defined(PROFILE) || defined(_DEBUG)
 inline void DX_SetDebugName(_In_ IDXGIObject* pObj, _In_z_ const CHAR* pstrName)
 {
 	if (pObj)

@@ -14,7 +14,7 @@ struct CB_GBUFFER_UNPACK
 GBuffer::GBuffer() : mpGBufferUnpackCB(NULL), mDepthStencilRT(NULL), mColorSpecIntensityRT(NULL), mNormalRT(NULL), mSpecPowerRT(NULL),
 mDepthStencilDSV(NULL), mDepthStencilReadOnlyDSV(NULL), mColorSpecIntensityRTV(NULL), mNormalRTV(NULL), mSpecPowerRTV(NULL),
 mDepthStencilSRV(NULL), mColorSpecIntensitySRV(NULL), mNormalSRV(NULL), mSpecPowerSRV(NULL),
-mDepthStencilState(NULL), mSaveScreenshots(false)
+mDepthStencilState(NULL)
 {
 
 }
@@ -195,16 +195,6 @@ void GBuffer::PostRender(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-
-	if (mSaveScreenshots)
-	{
-		SaveWICTextureToFile(pd3dImmediateContext, mDepthStencilRT, GUID_ContainerFormatJpeg, L"depthstencil.jpg");
-		SaveWICTextureToFile(pd3dImmediateContext, mColorSpecIntensityRT, GUID_ContainerFormatJpeg, L"colorspecintensity.jpg");
-		SaveWICTextureToFile(pd3dImmediateContext, mNormalRT, GUID_ContainerFormatJpeg, L"normalrt.jpg");
-		SaveWICTextureToFile(pd3dImmediateContext, mSpecPowerRT, GUID_ContainerFormatJpeg, L"specpower.jpg");
-		mSaveScreenshots = false;
-	}
-
 	// Little cleanup
 	ID3D11RenderTargetView* rt[3] = { NULL, NULL, NULL };
 	pd3dImmediateContext->OMSetRenderTargets(3, rt, mDepthStencilReadOnlyDSV);
@@ -230,9 +220,4 @@ void GBuffer::PrepareForUnpack(ID3D11DeviceContext* pd3dImmediateContext, Camera
 	pd3dImmediateContext->Unmap(mpGBufferUnpackCB, 0);
 
 	pd3dImmediateContext->PSSetConstantBuffers(0, 1, &mpGBufferUnpackCB);
-}
-
-void GBuffer::SnapScreenshot(ID3D11DeviceContext* pd3dImmediateContext)
-{
-	mSaveScreenshots = true;
 }

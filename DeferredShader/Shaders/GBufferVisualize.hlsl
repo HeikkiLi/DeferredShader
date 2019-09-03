@@ -69,7 +69,22 @@ VS_OUTPUT TextureVisVS(uint VertexID : SV_VertexID)
     return Output;
 }
 
-float4 TextureVisPS(VS_OUTPUT In) : SV_TARGET
+float4 TextureVisPSDepthPS(VS_OUTPUT In) : SV_TARGET
 {
-    return float4(DepthTexture.Sample(PointSampler, In.UV.xy).x, 0.0, 0.0, 1.0);
+	return float4(DepthTexture.Sample(PointSampler, In.UV.xy).x, 0.0, 0.0, 1.0);
+}
+
+float4 TextureVisPSCSpecPS(VS_OUTPUT In) : SV_TARGET
+{
+	return float4(ColorSpecIntTexture.Sample(PointSampler, In.UV.xy).x, 0.0, 0.0, 1.0);
+}
+
+float4 TextureVisPSNormalPS(VS_OUTPUT In) : SV_TARGET
+{
+	return float4(NormalTexture.Sample(PointSampler, In.UV.xy).x, 0.0, 0.0, 1.0);
+}
+
+float4 TextureVisPSSpecPowPS(VS_OUTPUT In) : SV_TARGET
+{
+	return float4(SpecPowTexture.Sample(PointSampler, In.UV.xy).x, 0.0, 0.0, 1.0);
 }
