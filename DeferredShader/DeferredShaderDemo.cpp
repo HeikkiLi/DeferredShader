@@ -68,10 +68,10 @@ private:
 	ID3D11PixelShader*	mGBufferVisPixelShader = NULL;
 
 	ID3D11VertexShader* mTextureVisVS = NULL;
-	ID3D11PixelShader* mTextureVisPSDepthPS = NULL;
-	ID3D11PixelShader* mTextureVisPSCSpecPS = NULL;
-	ID3D11PixelShader* mTextureVisPSNormalPS = NULL;
-	ID3D11PixelShader* mTextureVisPSSpecPowPS = NULL;
+	ID3D11PixelShader* mTextureVisDepthPS = NULL;
+	ID3D11PixelShader* mTextureVisCSpecPS = NULL;
+	ID3D11PixelShader* mTextureVisNormalPS = NULL;
+	ID3D11PixelShader* mTextureVisSpecPowPS = NULL;
 
 	// for managing the scene
 	SceneManager mSceneManager;
@@ -190,10 +190,10 @@ DeferredShaderApp::~DeferredShaderApp()
 
 	SAFE_DELETE(mCamera);
 
-	SAFE_RELEASE(mTextureVisPSDepthPS);
-	SAFE_RELEASE(mTextureVisPSCSpecPS);
-	SAFE_RELEASE(mTextureVisPSNormalPS);
-	SAFE_RELEASE(mTextureVisPSSpecPowPS);
+	SAFE_RELEASE(mTextureVisDepthPS);
+	SAFE_RELEASE(mTextureVisCSpecPS);
+	SAFE_RELEASE(mTextureVisNormalPS);
+	SAFE_RELEASE(mTextureVisSpecPowPS);
 
 	mSceneManager.Release();
 	mLightManager.Release();
@@ -256,47 +256,47 @@ bool DeferredShaderApp::Init()
 	if (FAILED(hr))
 		return false;
 
-	if (!CompileShader(str, NULL, "TextureVisPSDepthPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	if (!CompileShader(str, NULL, "TextureVisDepthPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
 	{
 		MessageBox(0, L"CompileShader Failed.", 0, 0);
 		return false;
 	}
 	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
-		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSDepthPS);
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisDepthPS);
 	SAFE_RELEASE(pShaderBlob);
 	if (FAILED(hr))
 		return false;
 	
 
-	if (!CompileShader(str, NULL, "TextureVisPSCSpecPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	if (!CompileShader(str, NULL, "TextureVisCSpecPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
 	{
 		MessageBox(0, L"CompileShader Failed.", 0, 0);
 		return false;
 	}
 	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
-		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSCSpecPS);
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisCSpecPS);
 	SAFE_RELEASE(pShaderBlob);
 	if (FAILED(hr))
 		return false;
 
-	if (!CompileShader(str, NULL, "TextureVisPSNormalPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	if (!CompileShader(str, NULL, "TextureVisNormalPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
 	{
 		MessageBox(0, L"CompileShader Failed.", 0, 0);
 		return false;
 	}
 	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
-		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSNormalPS);
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisNormalPS);
 	SAFE_RELEASE(pShaderBlob);
 	if (FAILED(hr))
 		return false;
 
-	if (!CompileShader(str, NULL, "TextureVisPSSpecPowPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
+	if (!CompileShader(str, NULL, "TextureVisSpecPowPS", "ps_5_0", dwShaderFlags, &pShaderBlob))
 	{
 		MessageBox(0, L"CompileShader Failed.", 0, 0);
 		return false;
 	}
 	hr = md3dDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(),
-		pShaderBlob->GetBufferSize(), NULL, &mTextureVisPSSpecPowPS);
+		pShaderBlob->GetBufferSize(), NULL, &mTextureVisSpecPowPS);
 	SAFE_RELEASE(pShaderBlob);
 	if (FAILED(hr))
 		return false;
@@ -380,15 +380,15 @@ void DeferredShaderApp::Update(float dt)
 	if (GetAsyncKeyState(VK_UP) & 0x01)
 		mCamera->Walk(dt * 50.0f);
 
-	if (GetAsyncKeyState(VK_NUMPAD1) & 0x01)
+	if (GetAsyncKeyState(0x31) & 0x01)
 		mRenderState = RENDER_STATE::BACKBUFFERRT;
-	if (GetAsyncKeyState(VK_NUMPAD2) & 0x01)
+	if (GetAsyncKeyState(0x32) & 0x01)
 		mRenderState = RENDER_STATE::DEPTHRT;
-	if (GetAsyncKeyState(VK_NUMPAD3) & 0x01)
+	if (GetAsyncKeyState(0x33) & 0x01)
 		mRenderState = RENDER_STATE::COLSPECRT;
-	if (GetAsyncKeyState(VK_NUMPAD4) & 0x01)
+	if (GetAsyncKeyState(0x34) & 0x01)
 		mRenderState = RENDER_STATE::NORMALRT;
-	if (GetAsyncKeyState(VK_NUMPAD5) & 0x01)
+	if (GetAsyncKeyState(0x35) & 0x01)
 		mRenderState = RENDER_STATE::SPECPOWRT;
 
 	/////  Rest of the lights
@@ -603,16 +603,16 @@ void DeferredShaderApp::VisualizeFullScreenGBufferTexture()
 	switch (mRenderState)
 	{
 	case DEPTHRT:
-		md3dImmediateContext->PSSetShader(mGBufferVisPixelShader, NULL, 0);
+		md3dImmediateContext->PSSetShader(mTextureVisDepthPS, NULL, 0);
 		break;
 	case COLSPECRT:
-		md3dImmediateContext->PSSetShader(mTextureVisPSCSpecPS, NULL, 0);
+		md3dImmediateContext->PSSetShader(mTextureVisCSpecPS, NULL, 0);
 		break;
 	case NORMALRT:
-		md3dImmediateContext->PSSetShader(mTextureVisPSNormalPS, NULL, 0);
+		md3dImmediateContext->PSSetShader(mTextureVisNormalPS, NULL, 0);
 		break;
 	case SPECPOWRT:
-		md3dImmediateContext->PSSetShader(mTextureVisPSSpecPowPS, NULL, 0);
+		md3dImmediateContext->PSSetShader(mTextureVisSpecPowPS, NULL, 0);
 		break;
 	default:
 		break;
