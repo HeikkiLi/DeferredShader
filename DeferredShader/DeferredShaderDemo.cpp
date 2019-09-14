@@ -3,7 +3,7 @@
 // different light types.
 // 
 // Features:
-// - deferred rendering
+// - deferred shading
 // - Gbuffer, different lights: directional, spot, point lights
 // - Percentage-closer filtering (pcf) shadows for point and spot light
 // - cascaded shadow map directional light

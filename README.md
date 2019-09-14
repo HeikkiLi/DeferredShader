@@ -1,9 +1,23 @@
 # DeferredShader
 
-![DeferredShader](https://i2.wp.com/heikkili.kapsi.fi/blog/wp-content/uploads/2019/09/screenshot_1.jpg)
+![Deferred Shader with visualization of GBuffer.](https://i2.wp.com/heikkili.kapsi.fi/blog/wp-content/uploads/2019/09/screenshot_1.jpg)
 
 Deferred Shader demo project, a simple DirectX11 application implementing deferred shading with different light types.
-Deferred Shader with visualization of GBuffer.
+
+
+## Controls:
+
+Keys:
+- F1 Framestats
+- F2 Visualize GBuffer
+- F3 Visualize ShadowMap
+- F4 Save screenshot
+- F11 Toggle settings window
+- ESC Quit
+
+Mouse:
+- MMB Rotate directional light
+- RMB Rotate camera look 
 
 ## Features:
  
